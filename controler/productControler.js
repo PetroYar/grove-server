@@ -12,13 +12,15 @@ const productControler = {
         return res.status(400).json({ error: "Фото обов'язкове" });
       }
 
+      const result = await cloudinary.v2.uploader.upload(req.file.path);
+
       fs.unlink(req.file.path, (err) => {
         if (err) {
           console.log("Помилка видалення файлу з локальної папки:", err);
         }
       });
       const categoryId = req.params.id;
-
+      //
       if (!mongoose.Types.ObjectId.isValid(categoryId)) {
         return res.status(400).json({ error: "Невалідний ID категорії" });
       }
@@ -40,7 +42,6 @@ const productControler = {
         return res.status(400).json({ error: "Ціна обов'язкова" });
       }
 
-      const result = await cloudinary.v2.uploader.upload(req.file.path);
       const newProduct = new Product({
         name,
         description,
@@ -80,6 +81,18 @@ const productControler = {
 
       res.status(200).json({ message: "Продукт видалено" });
     } catch (error) {
+      res.status(500).json({ error: "Помилка сервера" });
+    }
+  },
+  getAll: async (req, res) => {
+    try {
+      const products = await Product.find();
+      if (products.length === 0) {
+        return res.status(404).json({ message: "Продукти не знайдені" });
+      }
+      res.status(200).json({ data: products });
+    } catch (error) {
+      console.error("Помилка при отриманні продуктів:", error);
       res.status(500).json({ error: "Помилка сервера" });
     }
   },

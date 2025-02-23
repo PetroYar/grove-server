@@ -10,8 +10,8 @@ const Product = new mongoose.Schema(
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
+      required: true,
     },
-    stock: { type: Number, default: 0 },
     rating: { type: Number, min: 0, max: 5, default: 0 },
   },
   {
