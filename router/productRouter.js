@@ -6,7 +6,10 @@ const productRouter = Router();
 
 productRouter.post("/product/:id",uploadMiddleware, productControler.create);
 productRouter.delete("/product/:id", productControler.delete);
-productRouter.get("/product", productControler.getAll);
+productRouter.get("/products", productControler.getAll);
+productRouter.get("/products/paginated", productControler.getAllPagination);
+productRouter.get("/product/:id", productControler.getOne);
+
 
 
 

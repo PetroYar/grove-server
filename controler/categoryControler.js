@@ -36,9 +36,9 @@ const categoryControler = {
 
       res
         .status(201)
-        .json({ message: "Категорію  створено", data: newCategory });
+        .json( newCategory );
     } catch (error) {
-      console.error("Помилка при створенні категорії:", error);
+     
       res.status(500).json({ error: "Помилка сервера" });
     }
   },
@@ -69,7 +69,7 @@ const categoryControler = {
   },
   getAll: async (req, res) => {
     try {
-      const categories = await Category.find(); // Отримуємо всі категорії з бази даних
+      const categories = await Category.find(); 
       if (categories.length === 0) {
         return res.status(404).json({ message: "Категорії не знайдені" });
       }

@@ -3,12 +3,12 @@ import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
-
 import adminRouter from "./router/adminRouter.js";
 import authRouter from "./router/authRouter.js";
 
 import productRouter from "./router/productRouter.js";
 import categoryRouter from "./router/categoryRouter.js";
+import visitRouter from "./router/visitRouter.js";
 
 const app = express();
 dotenv.config();
@@ -17,14 +17,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
 app.use("/", adminRouter);
 app.use("/api", authRouter);
 
-
-
 app.use("/api", productRouter);
-app.use("/api/category",  categoryRouter);
+app.use("/api/category", categoryRouter);
+app.use("/", visitRouter);
 
 const startApp = async () => {
   try {
