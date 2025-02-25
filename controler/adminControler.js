@@ -17,12 +17,12 @@ const adminControler = {
 
       const admin = await Admin.findOne({ name });
       if (!admin) {
-        return res.status(401).json({ message: "Not a valid name" });
+        return res.status(401).json({ message: "Не вірне Імя" });
       }
       const validatePass = bcrypt.compareSync(password, admin.password);
 
       if (!validatePass) {
-        return res.status(400).json({ message: "Not a valid password" });
+        return res.status(400).json({ message: "Не вірний пароль" });
       }
 
       const token = generateAccessToken(admin._id);
@@ -31,7 +31,19 @@ const adminControler = {
       res.status(400).json({ message: "Login error", error });
     }
   },
+  getAdmin: async (req, res) => {
+    try {
+      const admin = await Admin.findById(req.admin.id).select("-password");
 
+      if (!admin) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      return res.status(200).json(admin);
+    } catch (error) {
+      return res.status(400).json({ message: "Error getting profile", error });
+    }
+  },
 };
 
-export default adminControler
+export default adminControler;

@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/", adminRouter);
+app.use("/api", adminRouter);
 app.use("/api", authRouter);
 
 app.use("/api", productRouter);

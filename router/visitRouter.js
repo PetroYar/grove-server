@@ -5,7 +5,7 @@ import visitControler from "../controler/visitControler.js";
 const visitRouter = Router()
 
 visitRouter.post('/',visitControler.visit)
-visitRouter.get("/visit", visitControler.getVisit);
+visitRouter.get("/api/visit", visitControler.getVisit);
 
 
 export default visitRouter
