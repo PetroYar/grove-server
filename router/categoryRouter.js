@@ -5,8 +5,7 @@ import uploadMiddleware from "../middleware/uploadMiddleware.js";
 const categoryRouter = Router();
 
 categoryRouter.post("/", uploadMiddleware, categoryControler.create);
-categoryRouter.delete("/:id",  categoryControler.create);
+categoryRouter.delete("/:id", categoryControler.deleteOne);
 categoryRouter.get("/", categoryControler.getAll);
-
 
 export default categoryRouter;

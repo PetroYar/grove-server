@@ -1,6 +1,7 @@
 import cloudinary from "cloudinary";
 import fs from "fs";
 import Category from "../models/Category.js";
+import Product from "../models/Product.js";
 
 const categoryControler = {
   create: async (req, res) => {
@@ -9,6 +10,11 @@ const categoryControler = {
         return res.status(400).json({ error: "Фото обов'язкове" });
       }
       const result = await cloudinary.v2.uploader.upload(req.file.path);
+      fs.unlink(req.file.path, (err) => {
+        if (err) {
+          console.log("Помилка видалення файлу з локальної папки:", err);
+        }
+      });
 
       const { name, description } = req.body;
 
@@ -19,63 +25,54 @@ const categoryControler = {
         return res.status(400).json({ error: "Опис обов'язковий" });
       }
 
-      fs.unlink(req.file.path, (err) => {
-        if (err) {
-          console.log("Помилка видалення файлу з локальної папки:", err);
-        }
-      });
-
       const newCategory = new Category({
         name,
         description,
         image: result.secure_url,
         imageId: result.public_id,
       });
-
       await newCategory.save();
 
-      res
-        .status(201)
-        .json( newCategory );
+      res.status(201).json(newCategory);
     } catch (error) {
-     
       res.status(500).json({ error: "Помилка сервера" });
     }
   },
-  delete: async (req, res) => {
+  deleteOne: async (req, res) => {
     try {
       const { id } = req.params;
+      console.log(id);
+      const category = await Category.findById(id);
 
-      const product = await Category.findById(id);
-
-      if (!product) {
+      if (!category) {
         return res.status(404).json({ error: "Категорія не знайдена" });
       }
 
-      await cloudinary.v2.uploader.destroy(product.imageId, (error, result) => {
-        if (error) {
-          return res
-            .status(500)
-            .json({ error: "Помилка видалення зображення" });
+      await cloudinary.v2.uploader.destroy(
+        category.imageId,
+        (error, result) => {
+          if (error) {
+            return res
+              .status(500)
+              .json({ error: "Помилка видалення зображення" });
+          }
         }
-      });
+      );
 
       await Category.findByIdAndDelete(id);
 
-      res.status(200).json({ message: "Продукт видалено" });
+      res.status(200).json({ message: "Категорію видалено" });
     } catch (error) {
       res.status(500).json({ error: "Помилка сервера" });
     }
   },
   getAll: async (req, res) => {
     try {
-      const categories = await Category.find(); 
+      const categories = await Category.find();
       if (categories.length === 0) {
         return res.status(404).json({ message: "Категорії не знайдені" });
       }
-      res
-        .status(200)
-        .json({ data: categories });
+      res.status(200).json(categories);
     } catch (error) {
       console.error("Помилка при отриманні категорій:", error);
       res.status(500).json({ error: "Помилка сервера" });

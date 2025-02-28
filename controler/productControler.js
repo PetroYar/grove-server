@@ -1,9 +1,8 @@
 import cloudinary from "cloudinary";
 import fs from "fs";
 import mongoose from "mongoose";
-
+import slugify from "slugify";
 import Product from "../models/Product.js";
-import Category from "../models/Category.js";
 
 const productControler = {
   create: async (req, res) => {
@@ -19,22 +18,18 @@ const productControler = {
           console.log("Помилка видалення файлу з локальної папки:", err);
         }
       });
-      const categoryId = req.params.id;
-      //
+
+      const { name, description, price, discount, categoryId } = req.body;
+
+      const seo = JSON.parse(req.body.seo);
+
       if (!mongoose.Types.ObjectId.isValid(categoryId)) {
         return res.status(400).json({ error: "Невалідний ID категорії" });
       }
-
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(400).json({ error: "Не правильний ID категорії" });
-      }
-
-      const { name, description, price } = req.body;
-
       if (!name) {
         return res.status(400).json({ error: "Імя обов'язкове" });
       }
+
       if (!description) {
         return res.status(400).json({ error: "Опис обов'язковий" });
       }
@@ -42,15 +37,32 @@ const productControler = {
         return res.status(400).json({ error: "Ціна обов'язкова" });
       }
 
+      if (!seo || !seo.title || !seo.description || !seo.keywords) {
+        return res.status(400).json({ error: "SEO мета-дані обов'язкові" });
+      }
+
+      const slugi = slugify(name, {
+        replacement: "-", 
+        remove: /[*+~.()'"!:@]/g, 
+        lower: true, 
+      });
+
       const newProduct = new Product({
         name,
         description,
         price,
+        slug: slugi,
         image: result.secure_url,
         imageId: result.public_id,
         categoryId,
+        seo: {
+          title: seo.title,
+          description: seo.description,
+          keywords: seo.keywords,
+        },
+        discount: discount || 0,
       });
-
+      console.log(newProduct);
       await newProduct.save();
 
       res.status(201).json(newProduct);

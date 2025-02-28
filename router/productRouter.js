@@ -4,7 +4,7 @@ import uploadMiddleware from "../middleware/uploadMiddleware.js";
 
 const productRouter = Router();
 
-productRouter.post("/product/:id",uploadMiddleware, productControler.create);
+productRouter.post("/product",uploadMiddleware, productControler.create);
 productRouter.delete("/product/:id", productControler.delete);
 productRouter.get("/products", productControler.getAll);
 productRouter.get("/products/paginated", productControler.getAllPagination);

@@ -6,13 +6,19 @@ const Product = new mongoose.Schema(
     description: { type: String, required: true },
     price: { type: Number, required: true },
     image: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
     imageId: { type: String, required: true },
-    categoryId: {
+    seo: {
+      title: { type: String, required: true },
+      description: { type: String, required: true },
+      keywords: { type: [String], required: true },
+    },
+    categoryId: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: true,
-    },
-    rating: { type: Number, min: 0, max: 5, default: 0 },
+    }],
+    discount: { type: Number, default: 0 },
   },
   {
     timestamps: true,
