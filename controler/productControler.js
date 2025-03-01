@@ -19,13 +19,10 @@ const productControler = {
         }
       });
 
-      const { name, description, price, discount, categoryId } = req.body;
-
+      const { name, description, price, discount, categories } = req.body;
+      console.log(req.body);
       const seo = JSON.parse(req.body.seo);
 
-      if (!mongoose.Types.ObjectId.isValid(categoryId)) {
-        return res.status(400).json({ error: "Невалідний ID категорії" });
-      }
       if (!name) {
         return res.status(400).json({ error: "Імя обов'язкове" });
       }
@@ -42,11 +39,13 @@ const productControler = {
       }
 
       const slugi = slugify(name, {
-        replacement: "-", 
-        remove: /[*+~.()'"!:@]/g, 
-        lower: true, 
+        replacement: "-",
+        remove: /[*+~.()'"!:@]/g,
+        lower: true,
       });
-
+      const categoryObjectIds = categories
+        .split(",")
+        .map((id) => new mongoose.Types.ObjectId(id));
       const newProduct = new Product({
         name,
         description,
@@ -54,7 +53,7 @@ const productControler = {
         slug: slugi,
         image: result.secure_url,
         imageId: result.public_id,
-        categoryId,
+        categoryId: categoryObjectIds,
         seo: {
           title: seo.title,
           description: seo.description,
@@ -62,7 +61,7 @@ const productControler = {
         },
         discount: discount || 0,
       });
-      console.log(newProduct);
+
       await newProduct.save();
 
       res.status(201).json(newProduct);
@@ -96,26 +95,16 @@ const productControler = {
       res.status(500).json({ error: "Помилка сервера" });
     }
   },
+
   getAll: async (req, res) => {
-    try {
-      const products = await Product.find();
-      if (products.length === 0) {
-        return res.status(404).json({ message: "Продукти не знайдені" });
-      }
-      res.status(200).json(products);
-    } catch (error) {
-      console.error("Помилка при отриманні продуктів:", error);
-      res.status(500).json({ error: "Помилка сервера" });
-    }
-  },
-  getAllPagination: async (req, res) => {
     try {
       const { _limit = 5, _start = 0, _order = "desc" } = req.query;
       const limit = parseInt(_limit, 10);
       const start = parseInt(_start, 10);
       const sortOrder = _order === "desc" ? -1 : 1;
       const currentPage = Math.floor(start / limit) + 1;
-      const result = await Post.aggregate([
+
+      const result = await Product.aggregate([
         {
           $facet: {
             totalCount: [{ $count: "count" }],
@@ -125,20 +114,42 @@ const productControler = {
               { $limit: limit },
               {
                 $lookup: {
-                  from: "users",
-                  localField: "userId",
+                  from: "categories",
+                  localField: "categoryId",
                   foreignField: "_id",
-                  as: "user",
+                  as: "categories",
                 },
               },
-              { $unwind: "$user" },
+              {
+                $project: {
+                  _id: 1,
+                  name: 1,
+                  description: 1,
+                  price: 1,
+                  image: 1,
+                  createdAt: 1,
+                  discount: 1, 
+                  seo: 1,
+                  categories: {
+                    $map: {
+                      input: "$categories",
+                      as: "category",
+                      in: {
+                        name: "$$category.name",
+                        _id: "$$category._id",
+                      },
+                    },
+                  },
+                },
+              },
             ],
           },
         },
       ]);
-      const totalPosts = result[0].totalCount[0]?.count || 0;
-      const posts = result[0].posts;
-      const totalPages = Math.ceil(totalPosts / limit);
+
+      const totalProducts = result[0].totalCount[0]?.count || 0;
+      const products = result[0].posts;
+      const totalPages = Math.ceil(totalProducts / limit);
 
       res.status(200).json({
         firstPage: 1,
@@ -146,15 +157,18 @@ const productControler = {
         currentPage,
         nextPage: currentPage < totalPages ? currentPage + 1 : null,
         prevPage: currentPage > 1 ? currentPage - 1 : null,
-        posts,
+        products,
         _limit: limit,
         _start: start,
         _order: _order,
       });
     } catch (error) {
-      return res.status(400).json({ message: "Error retrieving posts", error });
+      return res
+        .status(400)
+        .json({ message: "Error retrieving products", error });
     }
   },
+
   getOne: async (req, res) => {
     const { id } = req.params;
     const product = await Product.findById(id);
@@ -162,6 +176,88 @@ const productControler = {
       return res.status(404).json({ message: "Продукт не знайдено" });
     }
     return res.status(400).json(product);
+  },
+  update: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description, price, discount, categories } = req.body;
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "Невірний ID продукту" });
+      }
+
+      const product = await Product.findById(id);
+      if (!product) {
+        return res.status(404).json({ error: "Продукт не знайдено" });
+      }
+
+      const seo = JSON.parse(req.body.seo);
+      if (!seo || !seo.title || !seo.description || !seo.keywords) {
+        return res.status(400).json({ error: "SEO мета-дані обов'язкові" });
+      }
+
+      let updatedImage = product.image;
+      let updatedImageId = product.imageId;
+
+      if (req.file) {
+        console.log("File received:", req.file); 
+
+        const result = await cloudinary.v2.uploader.upload(req.file.path);
+        updatedImage = result.secure_url;
+        updatedImageId = result.public_id;
+
+        if (product.imageId) {
+          console.log("Deleting old image from Cloudinary...");
+          await cloudinary.v2.uploader.destroy(product.imageId);
+        }
+
+      
+        fs.unlink(req.file.path, (err) => {
+          if (err) {
+            console.log("Помилка видалення файлу з локальної папки:", err);
+          }
+        });
+      } else {
+        console.log("No file received");
+      }
+
+      const slugi = slugify(name, {
+        replacement: "-",
+        remove: /[*+~.()'"!:@]/g,
+        lower: true,
+      });
+
+      const categoryObjectIds = categories
+        .split(",")
+        .map((id) => new mongoose.Types.ObjectId(id));
+
+     
+      const updatedProduct = await Product.findByIdAndUpdate(
+        id,
+        {
+          name,
+          description,
+          price,
+          discount: discount || 0,
+          slug: slugi,
+          categoryId: categoryObjectIds,
+          image: updatedImage,
+          imageId: updatedImageId,
+          seo: {
+            title: seo.title,
+            description: seo.description,
+            keywords: seo.keywords,
+          },
+        },
+        { new: true }
+      );
+
+     
+      res.status(200).json(updatedProduct);
+    } catch (error) {
+      console.error("Помилка при оновленні продукту:", error);
+      res.status(500).json({ error: "Помилка сервера" });
+    }
   },
 };
 
