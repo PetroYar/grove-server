@@ -1,7 +1,8 @@
 import cloudinary from "cloudinary";
 import fs from "fs";
 import Category from "../models/Category.js";
-import Product from "../models/Product.js";
+import mongoose from "mongoose";
+
 
 const categoryControler = {
   create: async (req, res) => {
@@ -75,6 +76,65 @@ const categoryControler = {
       res.status(200).json(categories);
     } catch (error) {
       console.error("Помилка при отриманні категорій:", error);
+      res.status(500).json({ error: "Помилка сервера" });
+    }
+  },
+  update: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, description } = req.body;
+console.log(id)
+      // Перевірка валідності ID категорії
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "Невірний ID категорії" });
+      }
+
+      // Знаходимо категорію
+      const category = await Category.findById(id);
+      if (!category) {
+        return res.status(404).json({ error: "Категорію не знайдено" });
+      }
+
+      let updatedImage = category.image;
+      let updatedImageId = category.imageId;
+
+      if (req.file) {
+        console.log("File received:", req.file);
+
+        const result = await cloudinary.v2.uploader.upload(req.file.path);
+        updatedImage = result.secure_url;
+        updatedImageId = result.public_id;
+
+        if (category.imageId) {
+          console.log("Deleting old image from Cloudinary...");
+          await cloudinary.v2.uploader.destroy(category.imageId);
+        }
+
+        // Видаляємо тимчасовий файл
+        fs.unlink(req.file.path, (err) => {
+          if (err) {
+            console.log("Помилка видалення файлу з локальної папки:", err);
+          }
+        });
+      } else {
+        console.log("No file received");
+      }
+
+      // Оновлюємо категорію
+      const updatedCategory = await Category.findByIdAndUpdate(
+        id,
+        {
+          name,
+          description,
+          image: updatedImage,
+          imageId: updatedImageId,
+        },
+        { new: true }
+      );
+
+      res.status(200).json(updatedCategory);
+    } catch (error) {
+      console.error("Помилка при оновленні категорії:", error);
       res.status(500).json({ error: "Помилка сервера" });
     }
   },
