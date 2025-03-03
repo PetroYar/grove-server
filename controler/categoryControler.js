@@ -83,13 +83,11 @@ const categoryControler = {
     try {
       const { id } = req.params;
       const { name, description } = req.body;
-console.log(id)
-      // Перевірка валідності ID категорії
+
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ error: "Невірний ID категорії" });
       }
 
-      // Знаходимо категорію
       const category = await Category.findById(id);
       if (!category) {
         return res.status(404).json({ error: "Категорію не знайдено" });
@@ -110,7 +108,7 @@ console.log(id)
           await cloudinary.v2.uploader.destroy(category.imageId);
         }
 
-        // Видаляємо тимчасовий файл
+     
         fs.unlink(req.file.path, (err) => {
           if (err) {
             console.log("Помилка видалення файлу з локальної папки:", err);
@@ -120,7 +118,7 @@ console.log(id)
         console.log("No file received");
       }
 
-      // Оновлюємо категорію
+      
       const updatedCategory = await Category.findByIdAndUpdate(
         id,
         {

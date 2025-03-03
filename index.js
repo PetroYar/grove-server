@@ -10,6 +10,7 @@ import productRouter from "./router/productRouter.js";
 import categoryRouter from "./router/categoryRouter.js";
 import visitRouter from "./router/visitRouter.js";
 import commentRouter from "./router/commentRouter.js";
+import contentRouter from "./router/contentRouter.js";
 
 const app = express();
 dotenv.config();
@@ -25,6 +26,7 @@ app.use("/api", productRouter);
 app.use("/api/category", categoryRouter);
 app.use("/", visitRouter);
 app.use("/api/comment", commentRouter);
+app.use("/api/content", contentRouter);
 
 const startApp = async () => {
   try {
