@@ -1,7 +1,7 @@
 import Content from "../models/Content.js";
 import cloudinary from "cloudinary";
 import fs from "fs";
-import mongoose from "mongoose";
+
 const contentControler = {
   create: async (req, res) => {
     try {

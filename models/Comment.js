@@ -6,13 +6,13 @@ const Comment = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      
     },
+    isPublished: { type: Boolean, default: false },
+    
   },
   {
     timestamps: true,
   }
 );
 
-
-export default Comment
+export default mongoose.model("Comment",Comment) ;

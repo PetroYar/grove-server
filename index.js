@@ -11,6 +11,7 @@ import categoryRouter from "./router/categoryRouter.js";
 import visitRouter from "./router/visitRouter.js";
 import commentRouter from "./router/commentRouter.js";
 import contentRouter from "./router/contentRouter.js";
+import statsRouter from "./router/statsRouter.js";
 
 const app = express();
 dotenv.config();
@@ -27,6 +28,7 @@ app.use("/api/category", categoryRouter);
 app.use("/", visitRouter);
 app.use("/api/comment", commentRouter);
 app.use("/api/content", contentRouter);
+app.use("/api/stats", statsRouter);
 
 const startApp = async () => {
   try {
