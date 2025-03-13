@@ -19,7 +19,7 @@ const productControler = {
         }
       });
 
-      const { name, description, price, discount, categories } = req.body;
+      const { name, description, price, discount, categories, size } = req.body;
       console.log(req.body);
       const seo = JSON.parse(req.body.seo);
 
@@ -33,6 +33,9 @@ const productControler = {
       if (!price) {
         return res.status(400).json({ error: "Ціна обов'язкова" });
       }
+      if (!size) {
+        return res.status(400).json({ error: "Розмір обов'язковий" });
+      }
 
       if (!seo || !seo.title || !seo.description || !seo.keywords) {
         return res.status(400).json({ error: "SEO мета-дані обов'язкові" });
@@ -43,17 +46,21 @@ const productControler = {
         remove: /[*+~.()'"!:@]/g,
         lower: true,
       });
-      const categoryObjectIds = categories
-        .split(",")
-        .map((id) => new mongoose.Types.ObjectId(id));
+
+      const categoryObjectIds =
+        categories && typeof categories === "string" && categories.trim() !== ""
+          ? categories.split(",").map((id) => new mongoose.Types.ObjectId(id))
+          : [];
+
       const newProduct = new Product({
         name,
         description,
         price,
+        size,
         slug: slugi,
         image: result.secure_url,
         imageId: result.public_id,
-        categoryId: categoryObjectIds,
+        categoryId: categoryObjectIds || [],
         seo: {
           title: seo.title,
           description: seo.description,
@@ -126,9 +133,10 @@ const productControler = {
                   name: 1,
                   description: 1,
                   price: 1,
+                  size:1,
                   image: 1,
                   createdAt: 1,
-                  discount: 1, 
+                  discount: 1,
                   seo: 1,
                   categories: {
                     $map: {
@@ -180,7 +188,7 @@ const productControler = {
   update: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, price, discount, categories } = req.body;
+      const { name, description, price, discount, categories,size } = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ error: "Невірний ID продукту" });
@@ -200,7 +208,7 @@ const productControler = {
       let updatedImageId = product.imageId;
 
       if (req.file) {
-        console.log("File received:", req.file); 
+        console.log("File received:", req.file);
 
         const result = await cloudinary.v2.uploader.upload(req.file.path);
         updatedImage = result.secure_url;
@@ -211,7 +219,6 @@ const productControler = {
           await cloudinary.v2.uploader.destroy(product.imageId);
         }
 
-      
         fs.unlink(req.file.path, (err) => {
           if (err) {
             console.log("Помилка видалення файлу з локальної папки:", err);
@@ -227,17 +234,18 @@ const productControler = {
         lower: true,
       });
 
-      const categoryObjectIds = categories
-        .split(",")
-        .map((id) => new mongoose.Types.ObjectId(id));
+const categoryObjectIds =
+  categories && typeof categories === "string" && categories.trim() !== ""
+    ? categories.split(",").map((id) => new mongoose.Types.ObjectId(id))
+    : [];
 
-     
       const updatedProduct = await Product.findByIdAndUpdate(
         id,
         {
           name,
           description,
           price,
+          size,
           discount: discount || 0,
           slug: slugi,
           categoryId: categoryObjectIds,
@@ -252,7 +260,6 @@ const productControler = {
         { new: true }
       );
 
-     
       res.status(200).json(updatedProduct);
     } catch (error) {
       console.error("Помилка при оновленні продукту:", error);

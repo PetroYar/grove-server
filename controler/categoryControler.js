@@ -2,7 +2,7 @@ import cloudinary from "cloudinary";
 import fs from "fs";
 import Category from "../models/Category.js";
 import mongoose from "mongoose";
-
+import slugify from "slugify";
 
 const categoryControler = {
   create: async (req, res) => {
@@ -25,10 +25,15 @@ const categoryControler = {
       if (!description) {
         return res.status(400).json({ error: "Опис обов'язковий" });
       }
-
+      const slugi = slugify(name, {
+        replacement: "-",
+        remove: /[*+~.()'"!:@]/g,
+        lower: true,
+      });
       const newCategory = new Category({
         name,
         description,
+        slug: slugi,
         image: result.secure_url,
         imageId: result.public_id,
       });
@@ -108,7 +113,6 @@ const categoryControler = {
           await cloudinary.v2.uploader.destroy(category.imageId);
         }
 
-     
         fs.unlink(req.file.path, (err) => {
           if (err) {
             console.log("Помилка видалення файлу з локальної папки:", err);
@@ -117,13 +121,17 @@ const categoryControler = {
       } else {
         console.log("No file received");
       }
-
-      
+      const slugi = slugify(name, {
+        replacement: "-",
+        remove: /[*+~.()'"!:@]/g,
+        lower: true,
+      });
       const updatedCategory = await Category.findByIdAndUpdate(
         id,
         {
           name,
           description,
+          slug: slugi,
           image: updatedImage,
           imageId: updatedImageId,
         },
