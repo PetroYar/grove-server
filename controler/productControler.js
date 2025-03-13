@@ -3,6 +3,7 @@ import fs from "fs";
 import mongoose from "mongoose";
 import slugify from "slugify";
 import Product from "../models/Product.js";
+import Category from "../models/Category.js";
 
 const productControler = {
   create: async (req, res) => {
@@ -133,7 +134,7 @@ const productControler = {
                   name: 1,
                   description: 1,
                   price: 1,
-                  size:1,
+                  size: 1,
                   image: 1,
                   createdAt: 1,
                   discount: 1,
@@ -188,7 +189,7 @@ const productControler = {
   update: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, description, price, discount, categories,size } = req.body;
+      const { name, description, price, discount, categories, size } = req.body;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ error: "Невірний ID продукту" });
@@ -234,10 +235,10 @@ const productControler = {
         lower: true,
       });
 
-const categoryObjectIds =
-  categories && typeof categories === "string" && categories.trim() !== ""
-    ? categories.split(",").map((id) => new mongoose.Types.ObjectId(id))
-    : [];
+      const categoryObjectIds =
+        categories && typeof categories === "string" && categories.trim() !== ""
+          ? categories.split(",").map((id) => new mongoose.Types.ObjectId(id))
+          : [];
 
       const updatedProduct = await Product.findByIdAndUpdate(
         id,
@@ -263,6 +264,35 @@ const categoryObjectIds =
       res.status(200).json(updatedProduct);
     } catch (error) {
       console.error("Помилка при оновленні продукту:", error);
+      res.status(500).json({ error: "Помилка сервера" });
+    }
+  },
+  getByCategorySlug: async (req, res) => {
+    try {
+      const { slug } = req.params; 
+
+     
+      const category = await Category.findOne({ slug });
+
+      if (!category) {
+        return res.status(404).json({ error: "Категорія не знайдена" });
+      }
+
+ 
+      const products = await Product.find({ categoryId: category._id });
+
+      if (products.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Продукти не знайдені для цієї категорії" });
+      }
+
+      res.status(200).json(products);
+    } catch (error) {
+      console.error(
+        "Помилка при отриманні продуктів за слагом категорії:",
+        error
+      );
       res.status(500).json({ error: "Помилка сервера" });
     }
   },
