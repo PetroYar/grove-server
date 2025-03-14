@@ -11,7 +11,7 @@ productRouter.get(
   "/products/category/:slug",
   productControler.getByCategorySlug
 );
-productRouter.get("/product/:id", productControler.getOne);
+// productRouter.get("/product/:id", productControler.getOne);
 productRouter.get("/product/:slug", productControler.getProductBySlug);
 
 productRouter.put("/product/:id", uploadMiddleware, productControler.update);
