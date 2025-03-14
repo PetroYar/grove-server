@@ -269,16 +269,14 @@ const productControler = {
   },
   getByCategorySlug: async (req, res) => {
     try {
-      const { slug } = req.params; 
+      const { slug } = req.params;
 
-     
       const category = await Category.findOne({ slug });
 
       if (!category) {
         return res.status(404).json({ error: "Категорія не знайдена" });
       }
 
- 
       const products = await Product.find({ categoryId: category._id });
 
       if (products.length === 0) {
@@ -293,6 +291,20 @@ const productControler = {
         "Помилка при отриманні продуктів за слагом категорії:",
         error
       );
+      res.status(500).json({ error: "Помилка сервера" });
+    }
+  },
+  getProductBySlug: async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const product = await Product.findOne({ slug });
+      if (!product) {
+        return res.status(404).json({ error: "Продукт не знайдено" });
+      }
+
+      res.status(200).json(product);
+    } catch (error) {
+      console.error("Помилка при отриманні продукту за slug:", error);
       res.status(500).json({ error: "Помилка сервера" });
     }
   },
