@@ -295,7 +295,7 @@ const productControler = {
     }
   },
   getProductBySlug: async (req, res) => {
-    console.log(22)
+    
     try {
       const { slug } = req.params;
       const product = await Product.findOne({ slug });
