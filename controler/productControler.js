@@ -334,6 +334,7 @@ const productControler = {
                   description: 1,
                   price: 1,
                   size: 1,
+                  slug:1,
                   image: 1,
                   createdAt: 1,
                   discount: 1,
