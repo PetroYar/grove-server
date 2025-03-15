@@ -267,9 +267,42 @@ const productControler = {
       res.status(500).json({ error: "Помилка сервера" });
     }
   },
+  // getByCategorySlug: async (req, res) => {
+  //   try {
+  //     const { slug } = req.params;
+
+  //     const category = await Category.findOne({ slug });
+
+  //     if (!category) {
+  //       return res.status(404).json({ error: "Категорія не знайдена" });
+  //     }
+
+  //     const products = await Product.find({ categoryId: category._id });
+
+  //     if (products.length === 0) {
+  //       return res
+  //         .status(404)
+  //         .json({ error: "Продукти не знайдені для цієї категорії" });
+  //     }
+
+  //     res.status(200).json(products);
+  //   } catch (error) {
+  //     console.error(
+  //       "Помилка при отриманні продуктів за слагом категорії:",
+  //       error
+  //     );
+  //     res.status(500).json({ error: "Помилка сервера" });
+  //   }
+  // },
   getByCategorySlug: async (req, res) => {
     try {
       const { slug } = req.params;
+      const { _limit = 5, _start = 0, _order = "desc" } = req.query;
+
+      const limit = parseInt(_limit, 10);
+      const start = parseInt(_start, 10);
+      const sortOrder = _order === "desc" ? -1 : 1;
+      const currentPage = Math.floor(start / limit) + 1;
 
       const category = await Category.findOne({ slug });
 
@@ -277,7 +310,54 @@ const productControler = {
         return res.status(404).json({ error: "Категорія не знайдена" });
       }
 
-      const products = await Product.find({ categoryId: category._id });
+      const result = await Product.aggregate([
+        { $match: { categoryId: category._id } },
+        {
+          $facet: {
+            totalCount: [{ $count: "count" }],
+            products: [
+              { $sort: { createdAt: sortOrder } },
+              { $skip: start },
+              { $limit: limit },
+              {
+                $lookup: {
+                  from: "categories",
+                  localField: "categoryId",
+                  foreignField: "_id",
+                  as: "categories",
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  name: 1,
+                  description: 1,
+                  price: 1,
+                  size: 1,
+                  image: 1,
+                  createdAt: 1,
+                  discount: 1,
+                  seo: 1,
+                  categories: {
+                    $map: {
+                      input: "$categories",
+                      as: "category",
+                      in: {
+                        name: "$$category.name",
+                        _id: "$$category._id",
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ]);
+
+      const totalProducts = result[0].totalCount[0]?.count || 0;
+      const products = result[0].products;
+      const totalPages = Math.ceil(totalProducts / limit);
 
       if (products.length === 0) {
         return res
@@ -285,7 +365,17 @@ const productControler = {
           .json({ error: "Продукти не знайдені для цієї категорії" });
       }
 
-      res.status(200).json(products);
+      res.status(200).json({
+        firstPage: 1,
+        lastPage: totalPages,
+        currentPage,
+        nextPage: currentPage < totalPages ? currentPage + 1 : null,
+        prevPage: currentPage > 1 ? currentPage - 1 : null,
+        products,
+        _limit: limit,
+        _start: start,
+        _order: _order,
+      });
     } catch (error) {
       console.error(
         "Помилка при отриманні продуктів за слагом категорії:",
@@ -295,7 +385,6 @@ const productControler = {
     }
   },
   getProductBySlug: async (req, res) => {
-    
     try {
       const { slug } = req.params;
       const product = await Product.findOne({ slug });
