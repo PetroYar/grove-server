@@ -14,13 +14,19 @@ const generateAccessToken = (id) => {
 const authControler = {
   registration: async (req, res) => {
     try {
-      const errror = validationResult(req);
-      if (!errror.isEmpty()) {
-        return res
-          .status(400)
-          .json({ message: "Error when registering", errror });
-      }
+      // const error = validationResult(req);
+      // if (!error.isEmpty()) {
+      //   console.log("Validation errors:", error.array());
+      //   return res
+      //     .status(400)
+      //     .json({ message: "Error when registering", error });
+      // }
+
       const { username, email, password } = req.body;
+
+      if (!username || !email || !password) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
 
       const existUserName = await User.findOne({ username });
       if (existUserName) {
@@ -36,6 +42,7 @@ const authControler = {
           .json({ message: "A user with this email already exists" });
       }
 
+      console.log("Creating user:", username, email);
       const hashPass = bcrypt.hashSync(password, 7);
       const user = new User({
         username,
@@ -44,31 +51,43 @@ const authControler = {
       });
 
       await user.save();
+
       return res.status(201).json({ message: "User registered successfully" });
     } catch (error) {
-      res.status(400).json({ message: "Registration error", error });
+      res
+        .status(500)
+        .json({ message: "Registration error", error: error.message });
     }
   },
+
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
-
+      
+      
       const user = await User.findOne({ email });
       if (!user) {
         return res.status(401).json({ message: "Not a valid email" });
       }
+    
+
       const validatePass = bcrypt.compareSync(password, user.password);
+
       if (!validatePass) {
-        return res.status(400).json({ message: "Not a valid password" });
+        return res.status(401).json({ message: "Invalid password" });
       }
 
       const token = generateAccessToken(user._id);
+
       return res.status(200).json({ token });
     } catch (error) {
-      res.status(400).json({ message: "Login error", error });
+      return res
+        .status(400)
+        .json({ message: "Login error", error: error.message });
     }
   },
   getUser: async (req, res) => {
+   
     try {
       const user = await User.findById(req.user.id).select("-password");
 

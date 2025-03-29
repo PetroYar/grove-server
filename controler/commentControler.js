@@ -3,11 +3,11 @@ import Comment from "../models/Comment.js";
 const commentControler = {
   create: async (req, res) => {
     try {
-      const userId = req.admin.id;
-      console.log(userId);
+      const userId = req.user.id;
 
       const { description } = req.body;
 
+      console.log(userId, description);
       if (!userId) {
         return res
           .status(400)
@@ -91,14 +91,14 @@ const commentControler = {
     }
   },
   update: async (req, res) => {
-    const { id } = req.params; 
-    const { isPublished } = req.body; 
+    const { id } = req.params;
+    const { isPublished } = req.body;
 
     try {
       const updatedComment = await Comment.findByIdAndUpdate(
         id,
-        { isPublished }, 
-        { new: true } 
+        { isPublished },
+        { new: true }
       );
 
       if (!updatedComment) {
@@ -109,6 +109,34 @@ const commentControler = {
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Error updating comment status", error });
+    }
+  },
+  getAllPublished: async (req, res) => {
+    try {
+      const publishedComments = await Comment.find({ isPublished: true }).sort({
+        createdAt: -1,
+      });
+
+      return res.status(200).json(publishedComments);
+    } catch (error) {
+      console.error("Помилка при отриманні коментарів:", error);
+      return res.status(500).json({ error: "Помилка сервера" });
+    }
+  },
+  delete: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const deletedComment = await Comment.findByIdAndDelete(id);
+
+      if (!deletedComment) {
+        return res.status(404).json({ error: "Коментар не знайдено" });
+      }
+
+      return res.status(200).json({ message: "Коментар успішно видалено" });
+    } catch (error) {
+      console.error("Помилка при видаленні коментаря:", error);
+      return res.status(500).json({ error: "Помилка сервера" });
     }
   },
 };

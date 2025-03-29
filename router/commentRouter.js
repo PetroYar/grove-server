@@ -1,14 +1,14 @@
 import { Router } from "express";
 import commentControler from "../controler/commentControler.js";
-import authMiddleware from "../middleware/authMiddleware.js";
 
-const commentRouter = Router()
+import userMiddleware from "../middleware/userMiddleware.js";
 
-commentRouter.post('/',authMiddleware,commentControler.create)
-commentRouter.get("/",  commentControler.getAll);
+const commentRouter = Router();
+
+commentRouter.post("/", userMiddleware, commentControler.create);
+commentRouter.get("/", commentControler.getAll);
+commentRouter.get("/published", commentControler.getAllPublished);
 commentRouter.put("/:id", commentControler.update);
+commentRouter.delete("/:id", commentControler.delete);
 
-
-
-
-export default commentRouter
+export default commentRouter;

@@ -106,7 +106,7 @@ const productControler = {
 
   getAll: async (req, res) => {
     try {
-      const { _limit = 5, _start = 0, _order = "desc" } = req.query;
+      const { _limit = 10, _start = 0, _order = "desc" } = req.query;
       const limit = parseInt(_limit, 10);
       const start = parseInt(_start, 10);
       const sortOrder = _order === "desc" ? -1 : 1;
@@ -297,7 +297,7 @@ const productControler = {
   getByCategorySlug: async (req, res) => {
     try {
       const { slug } = req.params;
-      const { _limit = 5, _start = 0, _order = "desc" } = req.query;
+      const { _limit = 10, _start = 0, _order = "desc" } = req.query;
 
       const limit = parseInt(_limit, 10);
       const start = parseInt(_start, 10);
