@@ -32,14 +32,14 @@ const authControler = {
       if (existUserName) {
         return res
           .status(400)
-          .json({ message: "A user with this username already exists" });
+          .json({ message: "Користувач з таким ім’ям вже існує" });
       }
 
       const existEmail = await User.findOne({ email });
       if (existEmail) {
         return res
           .status(400)
-          .json({ message: "A user with this email already exists" });
+          .json({ message: "Користувач з таким email вже існує" });
       }
 
       console.log("Creating user:", username, email);
@@ -52,11 +52,13 @@ const authControler = {
 
       await user.save();
 
-      return res.status(201).json({ message: "User registered successfully" });
+      return res
+        .status(201)
+        .json({ message: "Користувач успішно зареєстрований" });
     } catch (error) {
       res
         .status(500)
-        .json({ message: "Registration error", error: error.message });
+        .json({ message: "Помилка реєстрації", error: error.message });
     }
   },
 
@@ -65,17 +67,15 @@ const authControler = {
       const { email, password } = req.body;
       
       
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(401).json({ message: "Not a valid email" });
-      }
-    
+        const user = await User.findOne({ email });
+        if (!user) {
+          return res.status(401).json({ message: "Невірний email" });
+        }
 
-      const validatePass = bcrypt.compareSync(password, user.password);
-
-      if (!validatePass) {
-        return res.status(401).json({ message: "Invalid password" });
-      }
+        const validatePass = bcrypt.compareSync(password, user.password);
+        if (!validatePass) {
+          return res.status(401).json({ message: "Невірний пароль" });
+        }
 
       const token = generateAccessToken(user._id);
 

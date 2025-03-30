@@ -113,9 +113,9 @@ const commentControler = {
   },
   getAllPublished: async (req, res) => {
     try {
-      const publishedComments = await Comment.find({ isPublished: true }).sort({
-        createdAt: -1,
-      });
+      const publishedComments = await Comment.find({ isPublished: true })
+        .sort({ createdAt: -1 })
+        .populate("userId", "username"); 
 
       return res.status(200).json(publishedComments);
     } catch (error) {
@@ -123,6 +123,7 @@ const commentControler = {
       return res.status(500).json({ error: "Помилка сервера" });
     }
   },
+
   delete: async (req, res) => {
     try {
       const { id } = req.params;
