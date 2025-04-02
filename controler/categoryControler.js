@@ -6,6 +6,7 @@ import slugify from "slugify";
 
 const categoryControler = {
   create: async (req, res) => {
+    console.log(33)
     try {
       if (!req.file) {
         return res.status(400).json({ error: "Фото обов'язкове" });
