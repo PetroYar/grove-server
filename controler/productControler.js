@@ -75,7 +75,8 @@ const productControler = {
       res.status(201).json(newProduct);
     } catch (error) {
       console.error("Помилка при створенні продукту:", error);
-      res.status(500).json({ error: "Помилка сервера" });
+    
+      res.status(500).json({ error: error.message });
     }
   },
   delete: async (req, res) => {

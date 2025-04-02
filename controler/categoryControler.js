@@ -42,7 +42,8 @@ const categoryControler = {
 
       res.status(201).json(newCategory);
     } catch (error) {
-      res.status(500).json({ error: "Помилка сервера" });
+     
+      res.status(500).json({ error: error.message });
     }
   },
   deleteOne: async (req, res) => {
